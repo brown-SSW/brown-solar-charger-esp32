@@ -9,11 +9,8 @@
   copies or substantial portions of the Software.
 */
 
-#include "time.h"
 #include <WiFi.h>
-
-const char* ssid = "REPLACE_WITH_YOUR_SSID";
-const char* password = "REPLACE_WITH_YOUR_PASSWORD";
+#include <time.h>
 
 const char* ntpServer = "pool.ntp.org";
 const long gmtOffset_sec = -3600 * 5;
@@ -22,15 +19,12 @@ void setup()
 {
     Serial.begin(115200);
 
-    // Connect to Wi-Fi
-    Serial.print("Connecting to ");
-    Serial.println(ssid);
     WiFi.begin("Brown-Guest");
     while (WiFi.status() != WL_CONNECTED) {
         delay(500);
         Serial.print(".");
     }
-    Serial.println("");
+    Serial.println(WiFi.macAddress());
     Serial.println("WiFi connected.");
 
     // Init and get the time
