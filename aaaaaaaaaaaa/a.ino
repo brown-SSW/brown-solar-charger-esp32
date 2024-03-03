@@ -28,7 +28,7 @@ void setup()
     Serial.println("WiFi connected.");
 
     // Init and get the time
-    configTime(gmtOffset_sec, 3600, ntpServer);
+    configTime(gmtOffset_sec, 0, ntpServer);
 }
 
 void loop()
