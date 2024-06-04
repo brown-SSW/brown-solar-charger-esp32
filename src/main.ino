@@ -59,6 +59,8 @@ int localMinute;
 
 boolean dailyMessageFlag = false;
 
+float batteryPercentage = 0.0;
+
 void setup()
 {
 
@@ -95,8 +97,6 @@ void loop()
         }
         localHour = localtime(&utcTime)->tm_hour;
         localMinute = localtime(&utcTime)->tm_min;
-        Serial.println(localHour);
-        Serial.println(localMinute);
     }
     /////////////////////////////////////////
 
@@ -104,25 +104,40 @@ void loop()
         sendDayDataPrevMillis = millis();
 
         dayData.time = utcTime;
+        // dayData.WGen
+        // dayData.WUse
+        dayData.batPercent = batteryPercentage;
 
         sendFirebaseDayData(dayData);
-        firebaseDeleteOldData("/data/dayData", 60, 2);
+        firebaseDeleteOldData("/data/dayData", 60 * 60 * 24, 2);
     }
-    if (timeAvailable && Firebase.ready() && (millis() - sendMonthDataPrevMillis > 15000 || sendMonthDataPrevMillis == 0)) {
+
+    if (timeAvailable && Firebase.ready() && (millis() - sendMonthDataPrevMillis > 60 * 60 * 2 && localHour == 12 + 8)) {
+        dailyMessageFlag = true; // arm the daily message flag at 8pm
+    }
+    if (timeAvailable && Firebase.ready() && (millis() - sendMonthDataPrevMillis > 60 * 60 * 2 && localHour == 12 + 9)) { // send daily data at 9pm (sun has set, but hopefully battery not dead yet)
+        dailyMessageFlag = false;
         sendMonthDataPrevMillis = millis();
 
         monthData.time = utcTime;
+        // monthData.hUsed
+        // monthData.WhGen
+        // monthData.WhUse
 
         sendFirebaseMonthData(monthData);
-        firebaseDeleteOldData("/data/monthData", 60, 2);
+        firebaseDeleteOldData("/data/monthData", 60 * 60 * 24 * 30, 2);
     }
-    if (timeAvailable && Firebase.ready() && (millis() - sendLiveDataPrevMillis > 15000 || sendLiveDataPrevMillis == 0)) {
+    if (timeAvailable && Firebase.ready() && (millis() - sendLiveDataPrevMillis > 300000 || sendLiveDataPrevMillis == 0)) {
         sendLiveDataPrevMillis = millis();
 
         liveData.time = utcTime;
+        liveData.batPercent = batteryPercentage;
+        // liveData.available
+        // liveData.WGen
+        // liveData.WUse
+        // liveData.cumulativeWhGen
 
         sendFirebaseLiveData(liveData);
-        firebaseDeleteOldData("/data/liveData", 60, 2);
     }
 }
 
@@ -133,7 +148,7 @@ boolean sendFirebaseLiveData(LiveData liveData)
     json.set(F("available"), liveData.available);
     json.set(F("WGen"), liveData.WGen);
     json.set(F("WUse"), liveData.WUse);
-    json.set(F("batPercent"), liveData.batPercent);
+    json.set(F("bat%"), liveData.batPercent);
     json.set(F("cumulativeWhGen"), liveData.cumulativeWhGen);
     json.set(F("time"), liveData.time);
 
